@@ -5,6 +5,6 @@
 
 @echo off
 for %%a in ("*.mkv") do (
-	ffmpeg -i %%a -map 0:v -map 0:a:language:jp -map 0:s -map 0:t -c copy -y %%~na_DAD.mkv
+	ffmpeg -i "%%a" -map 0:v -map 0:a:language:jp -map 0:s -map 0:t -c copy -y "%%~na_DAD.mkv"
 )
 pause
