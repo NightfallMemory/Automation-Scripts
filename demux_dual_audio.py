@@ -64,14 +64,14 @@ for f in video_path:
                         audio_track = file_metadata['index']-1; # We have to substract the video track(s)... (WIP: To count video tracks maybe if it's relevant)
                         
         # Checking subtitle tracks
-        # WIP
         if "subtitle" in file_metadata['codec_type']:
             for subtitle_format in subtitle_formats:
                 if subtitle_format in file_metadata['codec_name']:
                     file_metadata_tags = file_metadata['tags'];
                     subtitle_track_no += 1;
-                    if "Sign" in file_metadata_tags['title']:
-                        subtitle_track = subtitle_track_no-1; # The Signs/Songs subtitle track that I want demuxed.
+                    if 'title' in file_metadata_tags.keys():
+                        if "Sign" or "Signs" in file_metadata_tags['title']:
+                            subtitle_track = subtitle_track_no-1; # The Signs/Songs subtitle track that I want demuxed.
                         
     if audio_track_no > 1:
         subprocess.run(["ffmpeg",
@@ -88,11 +88,11 @@ for f in video_path:
                     '-disposition:s:0','default',
                     '-y',os.path.splitext(f)[0]+'_DAD.mkv']);
         print('The video was demuxed.');
+        os.remove(f);
     else:
         print('The video"' + os.path.basename(f) +'" is single audio.');
 
 print("------------------------");
 print("A total of " + str(counter) + " episodes were demuxed.");
 print("The end of the script.");
-print("Press ANY key to close the window.");
-input(); # Waiting for an input before closing the window.
+input("Press ANY key to close the window."); # Waiting for an input before closing the window.
