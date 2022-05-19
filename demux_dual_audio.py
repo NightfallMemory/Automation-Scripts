@@ -3,7 +3,7 @@
     A script for demuxing dual/tri/infinite audio anime releases and keeping only the jp audio.
     
     Requirements:
-    - python, ffmpeg & ffprobe in path.
+    - ffmpeg & ffprobe in path.
 """
 import os
 import glob
@@ -48,26 +48,30 @@ for f in video_path:
                             f], capture_output=True).stdout;
     metadata = json.loads(metadata);
     metadata = metadata['streams'];
+    audio_track_no = 0; # Audio track counter
+    subtitle_track_no = 0; # Subtitle track counter
     for file_metadata in metadata:
         # Checking video tracks
         # WIP: Maybe in the future if it's relevant
         
         # Checking audio tracks
-        audio_track_no = 0; # Audio track counter
-        for audio_codec in audio_codecs:
-            if audio_codec in file_metadata['codec_name']:
-                audio_track_no += 1;
-                if language_key in file_metadata:
-                    if file_metadata[language_key]==language and ("Commentary" or "commentary" not in file_metadata['title']):
+        if "audio" in file_metadata['codec_type']:
+            for audio_codec in audio_codecs:
+                if audio_codec in file_metadata['codec_name']:
+                    file_metadata_tags = file_metadata['tags'];
+                    audio_track_no += 1;
+                    if language in file_metadata_tags['language'] and ("Commentary" or "commentary" not in file_metadata['title']):
                         audio_track = file_metadata['index']-1; # We have to substract the video track(s)... (WIP: To count video tracks maybe if it's relevant)
                         
         # Checking subtitle tracks
         # WIP
-        for subtitle_format in subtitle_formats:
-            if subtitle_format in file_metadata['codec_name']:
-                if subtitle_key in file_metadata:
-                    if "Sign" in file_metadata[subtitle_key]:
-                        subtitle_track = file_metadata[subtitle_key]; # The Signs/Songs subtitle track that I want demuxed.
+        if "subtitle" in file_metadata['codec_type']:
+            for subtitle_format in subtitle_formats:
+                if subtitle_format in file_metadata['codec_name']:
+                    file_metadata_tags = file_metadata['tags'];
+                    subtitle_track_no += 1;
+                    if "Sign" in file_metadata_tags['title']:
+                        subtitle_track = subtitle_track_no-1; # The Signs/Songs subtitle track that I want demuxed.
                         
     if audio_track_no > 1:
         subprocess.run(["ffmpeg",
@@ -79,6 +83,9 @@ for f in video_path:
                     '-map','-0:s:'+str(subtitle_track)+'?',
                     '-map','0:t?',
                     '-c','copy',
+                    '-disposition:v:0','default',
+                    '-disposition:a:0','default',
+                    '-disposition:s:0','default',
                     '-y',os.path.splitext(f)[0]+'_DAD.mkv']);
         print('The video was demuxed.');
     else:
